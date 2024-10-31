@@ -1,0 +1,118 @@
+﻿@model IEnumerable<RelivMVC.Models.ViewModels.EstadoViewModel>
+
+@{ ViewData["Title"] = "Index"; }
+
+<h1>Index</h1>
+
+<p>
+    <!-- Botón para abrir el modal -->
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addEstadoModal">Agregar</button>
+</p>
+
+<!-- Tabla para mostrar los estados -->
+<table id="estadoTable" class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
+                <td>
+                    <!-- Cambiar ActionLink por un botón que abre el modal -->
+                    <button class="btn btn-link editEstadoBtn" data-id="@item.Id" data-descripcion="@item.Descripcion" data-toggle="modal" data-target="#addEstadoModal">Editar</button> |
+                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal para agregar o editar un Estado -->
+<div class="modal fade" id="addEstadoModal" tabindex="-1" role="dialog" aria-labelledby="addEstadoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEstadoModalLabel">Agregar Estado</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addEstadoForm">
+                    <input type="hidden" id="estadoId" name="estadoId" />
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <input type="text" class="form-control" id="descripcion" name="descripcion" required />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveEstadoBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#estadoTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/Spanish.json"
+                }
+            });
+
+            // Función para manejar la edición
+            $('.editEstadoBtn').on('click', function () {
+                var estadoId = $(this).data('id');
+                var descripcion = $(this).data('descripcion');
+
+                // Carga los datos en el modal
+                $('#estadoId').val(estadoId);
+                $('#descripcion').val(descripcion);
+
+                // Cambia el título del modal
+                $('#addEstadoModalLabel').text('Editar Estado');
+            });
+
+            // Enviar el formulario mediante AJAX cuando se presiona el botón Guardar
+            $('#saveEstadoBtn').on('click', function () {
+                var descripcion = $('#descripcion').val();
+                var estadoId = $('#estadoId').val();
+
+                var url = estadoId ? '@Url.Action("Put", "Estado")/' + estadoId : '@Url.Action("Create", "Estado")';
+                var method = estadoId ? 'PUT' : 'POST';
+
+                console.log(url); // Verifica la URL
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify({ Id: estadoId, Descripcion: descripcion }), // Asegúrate que las propiedades coincidan con el modelo
+                    success: function (result) {
+                        if (result.success) {
+                            $('#addEstadoModal').modal('hide');
+                            location.reload(); // Recarga la página para mostrar los cambios
+                        } else {
+                            alert("Error al " + (estadoId ? "actualizar" : "agregar") + " el estado: " + (result.errorMessage || "Error desconocido"));
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Status: " + status);
+                        console.log("Error: " + error);
+                        console.log("Response: " + xhr.responseText); // Muestra la respuesta completa
+                        alert("Error en la solicitud AJAX: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+}

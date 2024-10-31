@@ -1,0 +1,139 @@
+﻿@model IEnumerable<RelivMVC.Models.ViewModels.CategoriaViewModel>
+
+@{ ViewData["Title"] = "Index"; }
+
+<h1>Index</h1>
+
+<p>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoriaModal">Agregar</button>
+</p>
+
+<table id="categoriaTable" class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.First().Descripcion)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
+                <td>
+                    <button class="btn btn-link editCategoriaBtn" data-id="@item.Id" data-descripcion="@item.Descripcion" data-toggle="modal" data-target="#addCategoriaModal">Editar</button> |
+                    @Html.ActionLink("Details", "Details", "Categoria", new { id = item.Id }, null) |
+                    <button class="btn btn-danger deleteCategoriaBtn" data-id="@item.Id">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal para agregar o editar una Categoria -->
+<div class="modal fade" id="addCategoriaModal" tabindex="-1" role="dialog" aria-labelledby="addCategoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoriaModalLabel">Agregar Categoria</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoriaForm">
+                    <input type="hidden" id="categoriaId" name="categoriaId" />
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <input type="text" class="form-control" id="descripcion" name="descripcion" required /> <!-- Cambia 'descripcion' a 'Descripcion' -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveCategoriaBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#categoriaTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/Spanish.json"
+                }
+            });
+
+            // Función para manejar la edición
+            $('.editCategoriaBtn').on('click', function () {
+                var categoriaId = $(this).data('id');
+                var descripcion = $(this).data('descripcion');
+
+                $('#categoriaId').val(categoriaId);
+                $('#descripcion').val(descripcion);
+                $('#addCategoriaModalLabel').text('Editar Categoria');
+            });
+
+            // Enviar el formulario mediante AJAX cuando se presiona el botón Guardar
+            $('#saveCategoriaBtn').on('click', function () {
+                var descripcion = $('#descripcion').val();
+                var categoriaId = $('#categoriaId').val();
+
+                var url = categoriaId ? '@Url.Action("Put", "Categoria")/' + categoriaId : '@Url.Action("Create", "Categoria")';
+                var method = categoriaId ? 'PUT' : 'POST';
+
+                // Asegúrate de que la propiedad sea "Descripcion"
+                var dataToSend = { Id: categoriaId, Descripcion: descripcion };
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(dataToSend), // Enviar JSON correctamente
+                    success: function (result) {
+                        if (result.success) {
+                            $('#addCategoriaModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert("Error al " + (categoriaId ? "actualizar" : "agregar") + " la categoria: " + (result.errorMessage || "Error desconocido"));
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Status: " + status);
+                        console.log("Error: " + error);
+                        console.log("Response: " + xhr.responseText);
+                        alert("Error en la solicitud AJAX: " + error);
+                    }
+                });
+            });
+
+            // Función para manejar la eliminación
+            $('.deleteCategoriaBtn').on('click', function () {
+                var categoriaId = $(this).data('id');
+                var confirmDelete = confirm("¿Estás seguro de que deseas eliminar esta categoría?");
+
+                if (confirmDelete) {
+                    $.ajax({
+                        url: '@Url.Action("Delete", "Categoria")/' + categoriaId,
+                        type: 'DELETE',
+                        success: function (result) {
+                            if (result.success) {
+                                location.reload(); // Recarga la página para mostrar los cambios
+                            } else {
+                                alert("Error al eliminar la categoría: " + (result.errorMessage || "Error desconocido"));
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Status: " + status);
+                            console.log("Error: " + error);
+                            console.log("Response: " + xhr.responseText);
+                            alert("Error en la solicitud AJAX: " + error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

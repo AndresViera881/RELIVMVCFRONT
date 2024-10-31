@@ -37,25 +37,28 @@ namespace RelivMVC.Controllers
             return View(lista);
         }
 
-        [HttpPost]
-        public IActionResult Create(CategoriaViewModel categoriaViewModel)
+        [HttpPost()]
+        public IActionResult Create([FromBody] CategoriaViewModel categoriaViewModel)
         {
-            if (categoriaViewModel != null && !string.IsNullOrWhiteSpace(categoriaViewModel.Descripcion))
+            if (categoriaViewModel == null || string.IsNullOrWhiteSpace(categoriaViewModel.Descripcion))
             {
-                // Aquí se implementaría la lógica para enviar el POST a la API o guardar en la base de datos
-                HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Estado/PostEstados", categoriaViewModel).Result;
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return Json(new { success = true });
-                }
+                return Json(new { success = false, errorMessage = "Datos inválidos." });
             }
 
-            return Json(new { success = false, errorMessage = "El estado no pudo ser creado." });
+            HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Categoria/PostCategoria", categoriaViewModel).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+
+            string errorContent = response.Content.ReadAsStringAsync().Result;
+            Console.WriteLine("Error de la API: " + errorContent);
+            return Json(new { success = false, errorMessage = "La categoría no pudo ser creado." });
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Put(int id, CategoriaViewModel categoria)
+        [HttpPut()]
+        public IActionResult Put(int id, [FromBody] CategoriaViewModel categoria)
         {
             if (ModelState.IsValid)
             {
@@ -64,7 +67,7 @@ namespace RelivMVC.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Index");
+                    return Json(new { success = true });
                 }
                 else
                 {
@@ -74,18 +77,18 @@ namespace RelivMVC.Controllers
             return View(categoria);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete()]
         public IActionResult Delete(int id)
         {
             HttpResponseMessage response = _client.DeleteAsync($"{_client.BaseAddress}/Categoria/DeleteCategoria/{id}").Result;
 
             if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index");
+                return Json(new { success = true });
             }
             else
             {
-                ModelState.AddModelError("", "Error al eliminar el estado");
+                ModelState.AddModelError("", "Error al eliminar la categoria");
                 return RedirectToAction("Index");
             }
         }

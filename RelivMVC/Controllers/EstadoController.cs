@@ -37,25 +37,28 @@ namespace RelivMVC.Controllers
             return View(lista);
         }
 
-        [HttpPost]
+        [HttpPost()]
         public IActionResult Create([FromBody] EstadoViewModel estadoViewModel)
         {
-            if (estadoViewModel != null && !string.IsNullOrWhiteSpace(estadoViewModel.Descripcion))
+            if (estadoViewModel == null || string.IsNullOrWhiteSpace(estadoViewModel.Descripcion))
             {
-                // Aquí se implementaría la lógica para enviar el POST a la API o guardar en la base de datos
-                HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Estado/PostEstados", estadoViewModel).Result;
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return Json(new { success = true });
-                }
+                return Json(new { success = false, errorMessage = "Datos inválidos." });
             }
 
+            HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Estado/PostEstados", estadoViewModel).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+
+            string errorContent = response.Content.ReadAsStringAsync().Result;
+            Console.WriteLine("Error de la API: " + errorContent);
             return Json(new { success = false, errorMessage = "El estado no pudo ser creado." });
         }
 
-        [HttpPut]
-        public IActionResult Put(int id, EstadoViewModel estado)
+        [HttpPut()]
+        public IActionResult Put(int id, [FromBody] EstadoViewModel estado)
         {
             if (ModelState.IsValid)
             {
@@ -64,7 +67,7 @@ namespace RelivMVC.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Index");
+                    return Json(new { success = true });
                 }
                 else
                 {
@@ -74,14 +77,14 @@ namespace RelivMVC.Controllers
             return View(estado);
         }
 
-        [HttpDelete]
+        [HttpDelete()]
         public IActionResult Delete(int id)
         {
             HttpResponseMessage response = _client.DeleteAsync($"{_client.BaseAddress}/Estado/DeleteEstado/{id}").Result;
 
             if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index");
+                return Json(new { success = true });
             }
             else
             {

@@ -5,13 +5,15 @@
 <h1>Index</h1>
 
 <p>
+    <!-- Botón para abrir el modal -->
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoriaModal">Agregar</button>
 </p>
 
+<!-- Tabla para mostrar los estados -->
 <table id="categoriaTable" class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.First().Descripcion)</th>
+            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
             <th></th>
         </tr>
     </thead>
@@ -21,37 +23,37 @@
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
                 <td>
-                    <button class="btn btn-link editCategoriaBtn" data-id="@item.Id" data-descripcion="@item.Descripcion" data-toggle="modal" data-target="#addCategoriaModal">Editar</button> |
-                    @Html.ActionLink("Details", "Details", "Categoria", new { id = item.Id }, null) |
-                    <button class="btn btn-danger deleteCategoriaBtn" data-id="@item.Id">Eliminar</button>
+                    <button class="btn btn-link editEstadoBtn" data-id="@item.Id" data-descripcion="@item.Descripcion" data-toggle="modal" data-target="#addCategoriaModal">Editar</button> |
+                    <button class="btn btn-danger deleteEstadoBtn" data-id="@item.Id">Eliminar</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
-<!-- Modal para agregar o editar una Categoria -->
+<!-- Modal para agregar o editar un Estado -->
 <div class="modal fade" id="addCategoriaModal" tabindex="-1" role="dialog" aria-labelledby="addCategoriaModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCategoriaModalLabel">Agregar Categoria</h5>
+                <h5 class="modal-title" id="addCategoriaModalLabel">Agregar Estado</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <form id="addCategoriaForm">
-                    <input type="hidden" id="categoriaId" name="categoriaId" />
+                <form id="addEstadoForm">
+                    <input type="hidden" id="categoriaId" name="Id" />
                     <div class="form-group">
                         <label for="descripcion">Descripción</label>
-                        <input type="text" class="form-control" id="descripcion" name="descripcion" required /> <!-- Cambia 'descripcion' a 'Descripcion' -->
+                        <input type="text" class="form-control" id="descripcion" name="Descripcion" required />
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="saveCategoriaBtn">Guardar</button>
+                <button type="button" class="btn btn-primary" id="saveEstadoBtn">Guardar</button>
+
             </div>
         </div>
     </div>
@@ -67,68 +69,78 @@
             });
 
             // Función para manejar la edición
-            $('.editCategoriaBtn').on('click', function () {
+            $('.editEstadoBtn').on('click', function () {
                 var categoriaId = $(this).data('id');
                 var descripcion = $(this).data('descripcion');
 
+                // Carga los datos en el modal
                 $('#categoriaId').val(categoriaId);
                 $('#descripcion').val(descripcion);
-                $('#addCategoriaModalLabel').text('Editar Categoria');
+
+                // Cambia el título del modal
+                $('#addCategoriaModalLabel').text('Editar Estado');
             });
 
-            // Enviar el formulario mediante AJAX cuando se presiona el botón Guardar
-            $('#saveCategoriaBtn').on('click', function () {
+            // Función para manejar la apertura del modal en modo agregar
+            $('#addCategoriaModal').on('show.bs.modal', function (e) {
+                var triggerButton = $(e.relatedTarget);
+                if (triggerButton.hasClass('btn-primary')) { // Verifica si es el botón de "Agregar"
+                    // Limpia los campos del formulario
+                    $('#categoriaId').val('');
+                    $('#descripcion').val('');
+                    $('#addCategoriaModalLabel').text('Agregar Estado');
+                }
+            });
+
+            $('#saveEstadoBtn').on('click', function () {
                 var descripcion = $('#descripcion').val();
                 var categoriaId = $('#categoriaId').val();
 
-                var url = categoriaId ? '@Url.Action("Put", "Categoria")/' + categoriaId : '@Url.Action("Create", "Categoria")';
+                var url = categoriaId ? `@Url.Action("Put", "Categoria")/${categoriaId}` : '@Url.Action("Create", "Categoria")';
                 var method = categoriaId ? 'PUT' : 'POST';
 
-                // Asegúrate de que la propiedad sea "Descripcion"
-                var dataToSend = { Id: categoriaId, Descripcion: descripcion };
+                var data = {
+                    Id: categoriaId ? parseInt(categoriaId) : 0,
+                    Descripcion: descripcion
+                };
 
                 $.ajax({
                     url: url,
                     type: method,
-                    contentType: 'application/json',
-                    data: JSON.stringify(dataToSend), // Enviar JSON correctamente
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(data),
                     success: function (result) {
                         if (result.success) {
                             $('#addCategoriaModal').modal('hide');
-                            location.reload();
+                            location.reload(); // Recarga la página para mostrar los cambios
                         } else {
-                            alert("Error al " + (categoriaId ? "actualizar" : "agregar") + " la categoria: " + (result.errorMessage || "Error desconocido"));
+                            alert("Error al " + (categoriaId ? "actualizar" : "agregar") + " la categoria : " + (result.errorMessage || "Error desconocido"));
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.log("Status: " + status);
-                        console.log("Error: " + error);
-                        console.log("Response: " + xhr.responseText);
+                        console.error("Error en la solicitud AJAX:", xhr.responseText);
                         alert("Error en la solicitud AJAX: " + error);
                     }
                 });
             });
 
             // Función para manejar la eliminación
-            $('.deleteCategoriaBtn').on('click', function () {
+            $('.deleteEstadoBtn').on('click', function () {
                 var categoriaId = $(this).data('id');
-                var confirmDelete = confirm("¿Estás seguro de que deseas eliminar esta categoría?");
 
-                if (confirmDelete) {
+                if (confirm("¿Estás seguro de que deseas eliminar este estado?")) {
                     $.ajax({
-                        url: '@Url.Action("Delete", "Categoria")/' + categoriaId,
+                        url: `@Url.Action("Delete", "Categoria")/${categoriaId}`,
                         type: 'DELETE',
                         success: function (result) {
                             if (result.success) {
                                 location.reload(); // Recarga la página para mostrar los cambios
                             } else {
-                                alert("Error al eliminar la categoría: " + (result.errorMessage || "Error desconocido"));
+                                alert("Error al eliminar el estado: " + (result.errorMessage || "Error desconocido"));
                             }
                         },
                         error: function (xhr, status, error) {
-                            console.log("Status: " + status);
-                            console.log("Error: " + error);
-                            console.log("Response: " + xhr.responseText);
+                            console.error("Error en la solicitud AJAX:", xhr.responseText);
                             alert("Error en la solicitud AJAX: " + error);
                         }
                     });

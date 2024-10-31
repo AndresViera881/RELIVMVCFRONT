@@ -23,10 +23,8 @@
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
                 <td>
-                    <!-- Cambiar ActionLink por un botón que abre el modal -->
                     <button class="btn btn-link editEstadoBtn" data-id="@item.Id" data-descripcion="@item.Descripcion" data-toggle="modal" data-target="#addEstadoModal">Editar</button> |
-                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                    <button class="btn btn-danger deleteEstadoBtn" data-id="@item.Id">Eliminar</button>
                 </td>
             </tr>
         }
@@ -45,16 +43,17 @@
             </div>
             <div class="modal-body">
                 <form id="addEstadoForm">
-                    <input type="hidden" id="estadoId" name="estadoId" />
+                    <input type="hidden" id="estadoId" name="Id" />
                     <div class="form-group">
                         <label for="descripcion">Descripción</label>
-                        <input type="text" class="form-control" id="descripcion" name="descripcion" required />
+                        <input type="text" class="form-control" id="descripcion" name="Descripcion" required />
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="saveEstadoBtn">Guardar</button>
+
             </div>
         </div>
     </div>
@@ -82,21 +81,34 @@
                 $('#addEstadoModalLabel').text('Editar Estado');
             });
 
-            // Enviar el formulario mediante AJAX cuando se presiona el botón Guardar
+            // Función para manejar la apertura del modal en modo agregar
+            $('#addEstadoModal').on('show.bs.modal', function (e) {
+                var triggerButton = $(e.relatedTarget);
+                if (triggerButton.hasClass('btn-primary')) { // Verifica si es el botón de "Agregar"
+                    // Limpia los campos del formulario
+                    $('#estadoId').val('');
+                    $('#descripcion').val('');
+                    $('#addEstadoModalLabel').text('Agregar Estado');
+                }
+            });
+
             $('#saveEstadoBtn').on('click', function () {
                 var descripcion = $('#descripcion').val();
                 var estadoId = $('#estadoId').val();
 
-                var url = estadoId ? '@Url.Action("Put", "Estado")/' + estadoId : '@Url.Action("Create", "Estado")';
+                var url = estadoId ? `@Url.Action("Put", "Estado")/${estadoId}` : '@Url.Action("Create", "Estado")';
                 var method = estadoId ? 'PUT' : 'POST';
 
-                console.log(url); // Verifica la URL
+                var data = {
+                    Id: estadoId ? parseInt(estadoId) : 0,
+                    Descripcion: descripcion
+                };
 
                 $.ajax({
                     url: url,
                     type: method,
-                    contentType: 'application/json',
-                    data: JSON.stringify({ Id: estadoId, Descripcion: descripcion }), // Asegúrate que las propiedades coincidan con el modelo
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(data),
                     success: function (result) {
                         if (result.success) {
                             $('#addEstadoModal').modal('hide');
@@ -106,12 +118,33 @@
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.log("Status: " + status);
-                        console.log("Error: " + error);
-                        console.log("Response: " + xhr.responseText); // Muestra la respuesta completa
+                        console.error("Error en la solicitud AJAX:", xhr.responseText);
                         alert("Error en la solicitud AJAX: " + error);
                     }
                 });
+            });
+
+            // Función para manejar la eliminación
+            $('.deleteEstadoBtn').on('click', function () {
+                var estadoId = $(this).data('id');
+
+                if (confirm("¿Estás seguro de que deseas eliminar este estado?")) {
+                    $.ajax({
+                        url: `@Url.Action("Delete", "Estado")/${estadoId}`,
+                        type: 'DELETE',
+                        success: function (result) {
+                            if (result.success) {
+                                location.reload(); // Recarga la página para mostrar los cambios
+                            } else {
+                                alert("Error al eliminar el estado: " + (result.errorMessage || "Error desconocido"));
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error en la solicitud AJAX:", xhr.responseText);
+                            alert("Error en la solicitud AJAX: " + error);
+                        }
+                    });
+                }
             });
         });
     </script>

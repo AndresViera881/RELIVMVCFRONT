@@ -6,7 +6,7 @@
 
 <p>
     <!-- Botón para abrir el modal -->
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProductoModal">Agregar Producto</button>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProductoModal">Agregar</button>
 </p>
 
 <!-- Tabla para mostrar los productos -->
@@ -16,9 +16,9 @@
             <th>@Html.DisplayNameFor(model => model.Nombre)</th>
             <th>@Html.DisplayNameFor(model => model.Precio)</th>
             <th>@Html.DisplayNameFor(model => model.Stock)</th>
-            <th>@Html.DisplayNameFor(model => model.CategoriaId)</th>
-            <th>@Html.DisplayNameFor(model => model.EstadoId)</th>
-            <th></th>
+            <th>@Html.DisplayNameFor(model => model.Categoria)</th>
+            <th>@Html.DisplayNameFor(model => model.Estado)</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
@@ -28,22 +28,21 @@
                 <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
                 <td>@Html.DisplayFor(modelItem => item.Precio)</td>
                 <td>@Html.DisplayFor(modelItem => item.Stock)</td>
-                <td>@Html.DisplayFor(modelItem => item.CategoriaId)</td>
-                <td>@Html.DisplayFor(modelItem => item.EstadoId)</td>
+                <td>@Html.DisplayFor(modelItem => item.Categoria)</td>
+                <td>@Html.DisplayFor(modelItem => item.Estado)</td>
                 <td>
-                    <button class="btn btn-link editProductoBtn"
+                    <button class="btn btn-link editEstadoBtn"
                             data-id="@item.Id"
-                            data-descripcion="@item.Nombre"
+                            data-nombre="@item.Nombre"
                             data-precio="@item.Precio"
                             data-stock="@item.Stock"
-                            data-categoriaId="@item.CategoriaId"
-                            data-estadoId="@item.EstadoId"
+                            data-categoria-id="@item.Categoria"
+                            data-estado-id="@item.Estado"
                             data-toggle="modal"
                             data-target="#addProductoModal">
                         Editar
                     </button> |
-                    @Html.ActionLink("Details", "Details", "Producto", new { id = item.Id }, null) |
-                    @Html.ActionLink("Delete", "Delete", "Producto", new { id = item.Id }, null)
+                    <button class="btn btn-danger deleteEstadoBtn" data-id="@item.Id">Eliminar</button>
                 </td>
             </tr>
         }
@@ -61,33 +60,47 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="addProductoForm">
-                    <input type="hidden" id="productoId" name="productoId" />
+                <form id="addEstadoForm">
+                    <input type="hidden" id="productoId" name="Id" />
                     <div class="form-group">
-                        <label for="descripcion">Descripción</label>
-                        <input type="text" class="form-control" id="descripcion" name="descripcion" required />
+                        <label for="nombre">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="Nombre" required />
                     </div>
+
                     <div class="form-group">
                         <label for="precio">Precio</label>
-                        <input type="number" class="form-control" id="precio" name="precio" required />
+                        <input type="text" class="form-control" id="precio" name="Precio" required pattern="^\d+(\.\d{1,2})?$" title="Introduce un número decimal, por ejemplo: 123.45" maxlength="9" />
                     </div>
+
                     <div class="form-group">
                         <label for="stock">Stock</label>
-                        <input type="number" class="form-control" id="stock" name="stock" required />
+                        <input type="text" class="form-control" id="stock" name="Stock" required pattern="^\d+$" title="Introduce un número entero." maxlength="5" />
                     </div>
+
                     <div class="form-group">
-                        <label for="categoriaId">Categoría ID</label>
-                        <input type="text" class="form-control" id="categoriaId" name="categoriaId" required />
+                        <label for="categoria">Categoría</label>
+
+                        <select id="categoriaId" name="CategoriaId">
+                            <option value="">Seleccione una categoría</option>
+                        </select>
                     </div>
+
                     <div class="form-group">
-                        <label for="estadoId">Estado ID</label>
-                        <input type="text" class="form-control" id="estadoId" name="estadoId" required />
+                        <label for="estado">Estado</label>
+                        <select id="estadoId" name="EstadoId">
+                            <option value="">Seleccione un estado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fechaCreacion">Fecha de Creación</label>
+                        <input type="date" class="form-control" id="fechaCreacion" name="FechaCreacion" required readonly />
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="saveProductoBtn">Guardar</button>
+                <button type="button" class="btn btn-primary" id="saveEstadoBtn">Guardar</button>
             </div>
         </div>
     </div>
@@ -96,62 +109,216 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+
             $('#productoTable').DataTable({
                 "language": {
                     "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/Spanish.json"
                 }
+            });          
+
+            document.getElementById('precio').addEventListener('input', function (e) {
+                // Reemplaza cualquier carácter que no sea un dígito o un punto
+                this.value = this.value.replace(/[^0-9.]/g, '');
+            });
+
+            document.getElementById('stock').addEventListener('input', function (e) {
+                // Reemplaza cualquier carácter que no sea un dígito
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Evento onchange para el select de categoría
+            $('#categoriaId').on('change', function () {
+                var categoriaId = $(this).val();
+                console.log("ID de la categoría seleccionada:", categoriaId);
+
+                // Aquí puedes agregar lógica adicional según lo necesites, como actualizar otros campos.
+            });
+
+            // Evento onchange para el select de categoría
+            $('#estadoId').on('change', function () {
+                var estadoId = $(this).val();
+                console.log("ID del estado seleccionado:", estadoId);
+
+                // Aquí puedes agregar lógica adicional según lo necesites, como actualizar otros campos.
             });
 
             // Función para manejar la edición
-            $('.editProductoBtn').on('click', function () {
-                var productoId = $(this).data('id');
-                var descripcion = $(this).data('descripcion');
+            $('.editEstadoBtn').on('click', function () {
+                var id = $(this).data('id');
+                var nombre = $(this).data('nombre');
                 var precio = $(this).data('precio');
                 var stock = $(this).data('stock');
                 var categoriaId = $(this).data('categoriaId');
                 var estadoId = $(this).data('estadoId');
 
+                // Establecer la fecha de modificacion como la fecha actual
+                var fecha = new Date();
+                var anio = fecha.getFullYear();
+                var mes = ('0' + (fecha.getMonth() + 1)).slice(-2); // Mes (0-11 así que sumamos 1 y formateamos a dos dígitos)
+                var dia = ('0' + fecha.getDate()).slice(-2); // Día
+                var fechaModificacion = anio + '-' + mes + '-' + dia;
+
+                $('#fechaModificacion').val(fechaModificacion);
+
                 // Carga los datos en el modal
-                $('#productoId').val(productoId);
-                $('#descripcion').val(descripcion);
+                $('#productoId').val(id);
+                $('#nombre').val(nombre);
                 $('#precio').val(precio);
                 $('#stock').val(stock);
                 $('#categoriaId').val(categoriaId);
                 $('#estadoId').val(estadoId);
 
+                // Establecer la fecha de creación como la fecha actual
+                var fecha = new Date();
+                var anio = fecha.getFullYear();
+                var mes = ('0' + (fecha.getMonth() + 1)).slice(-2); // Mes (0-11 así que sumamos 1 y formateamos a dos dígitos)
+                var dia = ('0' + fecha.getDate()).slice(-2); // Día
+                var fechaModificacion = anio + '-' + mes + '-' + dia;
+
+                $('#fechaCreacion').val('');
+                $('#fechaModificacion').val(fechaModificacion);
+
                 // Cambia el título del modal
                 $('#addProductoModalLabel').text('Editar Producto');
             });
 
-            // Enviar el formulario mediante AJAX cuando se presiona el botón Guardar
-            $('#saveProductoBtn').on('click', function () {
-                var descripcion = $('#descripcion').val();
+            // Función para manejar la apertura del modal en modo agregar
+            $('#addProductoModal').on('show.bs.modal', function (e) {
+
+
+                $.ajax({
+                    url: 'https://localhost:7186/api/Categoria/GetCategorias',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        // Asegúrate de acceder a la propiedad 'data'
+                        const categorias = response.data; // Accede a la lista de categorías
+                        console.log('Categorías:', categorias); // Para verificar la estructura de los datos
+
+                        // Llenar el select con los datos obtenidos
+                        $.each(categorias, function (index, categoria) {
+                            $('#categoriaId').append($('<option>', {
+                                value: categoria.id, // Propiedad 'id' de la categoría
+                                text: categoria.descripcion // Propiedad 'descripcion' de la categoría
+                            }));
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener las categorías:', error);
+                    }
+                });
+
+                $.ajax({
+                    url: 'https://localhost:7186/api/Estado/GetEstados',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        // Asegúrate de acceder a la propiedad 'data'
+                        const estados = response.data; // Accede a la lista de categorías
+                        console.log('Estados:', estados); // Para verificar la estructura de los datos
+
+                        // Llenar el select con los datos obtenidos
+                        $.each(estados, function (index, estado) {
+                            $('#estadoId').append($('<option>', {
+                                value: estado.id, // Propiedad 'id' de la categoría
+                                text: estado.descripcion // Propiedad 'descripcion' de la categoría
+                            }));
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener las categorías:', error);
+                    }
+                });
+
+
+
+                var triggerButton = $(e.relatedTarget);
+                if (triggerButton.hasClass('btn-primary')) { // Verifica si es el botón de "Agregar"
+                    // Limpia los campos del formulario
+                    $('#productoId').val('');
+                    $('#nombre').val('');
+                    $('#precio').val('');
+                    $('#stock').val('');
+                    $('#categoriaId').val('');
+                    $('#estadoId').val('');
+                    $('#fechaCreacion').val('');
+
+                    // Establece la fecha de creación como la fecha actual
+                    var fecha = new Date();
+                    var anio = fecha.getFullYear();
+                    var mes = ('0' + (fecha.getMonth() + 1)).slice(-2); // Mes (0-11 así que sumamos 1 y formateamos a dos dígitos)
+                    var dia = ('0' + fecha.getDate()).slice(-2); // Día
+                    var fechaCreacion = anio + '-' + mes + '-' + dia;
+                    $('#fechaCreacion').val(fechaCreacion);
+                    $('#fechaModificacion').val('');
+
+                    $('#addProductoModalLabel').text('Agregar Producto');
+                }
+            });
+
+            $('#saveEstadoBtn').on('click', function () {
+                var id = $('#productoId').val();
+                var nombre = $('#nombre').val();
                 var precio = $('#precio').val();
                 var stock = $('#stock').val();
                 var categoriaId = $('#categoriaId').val();
                 var estadoId = $('#estadoId').val();
-                var productoId = $('#productoId').val();
+                var fechaCreacion = $('#fechaCreacion').val();
 
-                var url = productoId ? '@Url.Action("Put", "Producto")/' + productoId : '@Url.Action("Create", "Producto")';
-                var method = productoId ? 'PUT' : 'POST';
+                var url = id ? `@Url.Action("Put", "Producto")/${id}` : '@Url.Action("Create", "Producto")';
+                var method = id ? 'PUT' : 'POST';
+
+                var data = {
+                    id: id ? parseInt(id) : 0,
+                    nombre: nombre,
+                    precio: parseFloat(precio),
+                    stock: parseInt(stock),
+                    categoriaId: parseInt(categoriaId),
+                    estadoId: parseInt(estadoId),
+                    fechaCreacion: fechaCreacion,
+                    fechaModificacion: ''
+                };
+
+                console.log('data', data);
 
                 $.ajax({
                     url: url,
                     type: method,
-                    contentType: 'application/json',
-                    data: JSON.stringify({ Id: productoId, Descripcion: descripcion, Precio: precio, Stock: stock, CategoriaId: categoriaId, EstadoId: estadoId }),
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(data),
                     success: function (result) {
                         if (result.success) {
                             $('#addProductoModal').modal('hide');
                             location.reload(); // Recarga la página para mostrar los cambios
                         } else {
-                            alert("Error al " + (productoId ? "actualizar" : "agregar") + " el producto: " + (result.errorMessage || "Error desconocido"));
+                            alert("Error al " + (id ? 'actualizar' : 'crear') + " el producto: " + result.message);
                         }
                     },
-                    error: function (xhr, status, error) {
-                        alert("Error en la solicitud AJAX: " + error);
+                    error: function (xhr) {
+                        alert("Error en la solicitud: " + xhr.responseText);
                     }
                 });
+
+            });
+
+            $('.deleteEstadoBtn').on('click', function () {
+                var id = $(this).data('id');
+                if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
+                    $.ajax({
+                        url: `@Url.Action("Delete", "Producto")/${id}`,
+                        type: 'DELETE',
+                        success: function (result) {
+                            if (result.success) {
+                                location.reload(); // Recarga la página para mostrar los cambios
+                            } else {
+                                alert("Error al eliminar el producto: " + result.message);
+                            }
+                        },
+                        error: function (xhr) {
+                            alert("Error en la solicitud: " + xhr.responseText);
+                        }
+                    });
+                }
             });
         });
     </script>

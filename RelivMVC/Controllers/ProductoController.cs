@@ -37,25 +37,61 @@ namespace RelivMVC.Controllers
             return View(lista);
         }
 
+        [HttpGet("GetCategorias")]
+        public IActionResult GetCategorias()
+        {
+            List<CategoriaViewModel> lista = new List<CategoriaViewModel>();
+            HttpResponseMessage response = _client.GetAsync(_client.BaseAddress + "/Categoria/GetCategorias").Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                string data = response.Content.ReadAsStringAsync().Result;
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<List<CategoriaViewModel>>>(data);
+                lista = apiResponse?.Data ?? new List<CategoriaViewModel>();
+            }
+            return View(lista); 
+        }
+
+        [HttpGet("GetEstados")]
+        public IActionResult GetEstados()
+        {
+            List<EstadoViewModel> lista = new List<EstadoViewModel>();
+            HttpResponseMessage response = _client.GetAsync(_client.BaseAddress + "/Estado/GetEstados").Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                string data = response.Content.ReadAsStringAsync().Result;
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<List<EstadoViewModel>>>(data);
+                lista = apiResponse?.Data ?? new List<EstadoViewModel>();
+            }
+            return View(lista);
+        }
+
+
+
         [HttpPost]
         public IActionResult Create([FromBody] ProductoViewModel productoViewModel)
         {
-            if (productoViewModel != null)
-            {
-                // Aquí se implementaría la lógica para enviar el POST a la API o guardar en la base de datos
-                HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Producto/PostProducto", productoViewModel).Result;
 
-                if (response.IsSuccessStatusCode)
-                {
-                    return Json(new { success = true });
-                }
+            if (productoViewModel == null || string.IsNullOrWhiteSpace(productoViewModel.Nombre) || productoViewModel.Precio <= 0 || productoViewModel.Stock <= 0)
+            {
+                return Json(new { success = false, errorMessage = "Datos inválidos." });
             }
 
-            return Json(new { success = false, errorMessage = "El estado no pudo ser creado." });
+            HttpResponseMessage response = _client.PostAsJsonAsync(_client.BaseAddress + "/Producto/PostProducto", productoViewModel).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+
+            string errorContent = response.Content.ReadAsStringAsync().Result;
+            Console.WriteLine("Error de la API: " + errorContent);
+            return Json(new { success = false, errorMessage = "El producto no pudo ser creado." });
         }
 
-        [HttpPut]
-        public IActionResult Put(int id, ProductoViewModel producto)
+        [HttpPut()]
+        public IActionResult Put(int id, [FromBody] ProductoViewModel producto)
         {
             if (ModelState.IsValid)
             {
@@ -64,30 +100,30 @@ namespace RelivMVC.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Index");
+                    return Json(new { success = true });
                 }
                 else
                 {
-                    ModelState.AddModelError("", "Error al actualizar el estado");
+                    ModelState.AddModelError("", "Error al actualizar el producto");
                 }
             }
             return View(producto);
         }
 
-        [HttpDelete]
+        [HttpDelete()]
         public IActionResult Delete(int id)
         {
             HttpResponseMessage response = _client.DeleteAsync($"{_client.BaseAddress}/Producto/DeleteProducto/{id}").Result;
 
             if (response.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index");
+                return Json(new { success = true });
             }
             else
             {
-                ModelState.AddModelError("", "Error al eliminar el estado");
+                ModelState.AddModelError("", "Error al eliminar el producto");
                 return RedirectToAction("Index");
             }
         }
     }
-}
+    }
